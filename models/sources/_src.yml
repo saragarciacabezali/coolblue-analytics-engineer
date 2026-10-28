@@ -1,0 +1,198 @@
+version: 2
+models:
+  - name: src_campaign_manager
+    columns:
+    - name: campaign_manager_id
+      data_tests:
+        - not_null
+        - unique
+    - name: campaign_manager_name
+      data_tests:
+        - not_null
+  - name: src_campaign_product_type
+    data_tests:
+    - dbt_utils.unique_combination_of_columns:
+        arguments:
+          combination_of_columns: ['campaign_id', 'product_type_id']
+    columns:
+    - name: campaign_product_type_id
+      data_tests:
+        - not_null
+        - unique
+    - name: campaign_id
+      data_tests:
+        - not_null
+        - relationships:
+            arguments:
+              to: ref('src_campaign')
+              field: campaign_id
+    - name: product_type_id
+      data_tests:
+        - not_null
+        - relationships:
+            arguments:
+              to: ref('src_product_type')
+              field: product_type_id
+    - name: forecast_quantity
+      data_tests:
+        - not_null
+        - dbt_utils.expression_is_true:
+            arguments:
+              expression: ">0"
+  - name: src_campaign_product
+    data_tests:
+    - dbt_utils.unique_combination_of_columns:
+        arguments:
+          combination_of_columns: ['campaign_id', 'product_id']
+    columns:
+    - name: campaign_id
+      data_tests:
+        - not_null
+        - relationships:
+            arguments:
+              to: ref('src_campaign')
+              field: campaign_id
+    - name: campaign_product_id
+      data_tests:
+        - not_null
+        - unique
+    - name: product_id
+      data_tests:
+        - not_null
+        - relationships:
+            arguments:
+              to: ref('src_product')
+              field: product_id
+    - name: forecast_quantity
+      data_tests:
+        - not_null
+        - dbt_utils.expression_is_true:
+            arguments:
+              expression: ">0"
+  - name: src_campaign
+    data_tests:
+    - dbt_utils.expression_is_true:
+        arguments:
+          expression: "DATE_DIFF(end_date, start_date, DAY) >= 14"  # Campaigns run for at least two weeks
+    columns:
+    - name: campaign_id
+      data_tests:
+        - not_null
+        - unique
+    - name: campaign_name
+      data_tests:
+        - not_null
+    - name: campaign_manager_id
+      data_tests:
+        - not_null
+        - relationships:
+            arguments:
+              to: ref('src_campaign_manager')
+              field: campaign_manager_id
+    - name: start_date
+      data_tests:
+        - not_null
+    - name: end_date
+      data_tests:
+        - not_null
+    - name: discount_rate
+      data_tests:
+        - not_null
+        - dbt_utils.expression_is_true:
+            arguments:
+              expression: "BETWEEN 0.2 AND 0.4"
+  - name: src_order_line
+    data_tests:
+    - dbt_utils.unique_combination_of_columns:
+        arguments:
+          combination_of_columns: ['order_id', 'product_id']
+    columns:
+    - name: order_line_id
+      data_tests:
+        - not_null
+        - unique
+    - name: order_id
+      data_tests:
+        - not_null
+        - relationships:
+            arguments:
+              to: ref('src_order')
+              field: order_id
+    - name: product_id
+      data_tests:
+        - not_null
+        - relationships:
+            arguments:
+              to: ref('src_product')
+              field: product_id
+    - name: quantity
+      data_tests:
+        - not_null
+        - dbt_utils.expression_is_true:
+            arguments:
+              expression: "> 0"
+  - name: src_order
+    columns:
+    - name: order_id
+      data_tests:
+        - not_null
+        - unique
+    - name: order_date
+      data_tests:
+        - not_null
+    - name: store_id
+      data_tests:
+        - not_null
+        - relationships:
+            arguments:
+              to: ref('src_store')
+              field: store_id
+  - name: src_product_type
+    columns:
+    - name: product_type_id
+      data_tests:
+        - not_null
+        - unique
+    - name: product_type_name
+      data_tests:
+        - not_null
+        - unique
+    - name: team_id
+      data_tests:
+        - not_null
+  - name: src_product
+    columns:
+    - name: product_id
+      data_tests:
+        - not_null
+        - unique
+    - name: product_type_id
+      data_tests:
+        - not_null
+        - relationships:
+            arguments:
+              to: ref('src_product_type')
+              field: product_type_id
+    - name: product_name
+      data_tests:
+        - not_null
+        - unique
+  - name: src_store
+    data_tests:
+    - dbt_utils.unique_combination_of_columns:
+        arguments:
+          combination_of_columns: ['store_name', 'store_address']
+    columns:
+    - name: store_id  
+      data_tests:
+        - not_null
+        - unique
+    - name: store_name
+      data_tests:
+        - not_null
+    - name: store_address
+      data_tests:
+        - not_null
+    - name: store_type_id
+      data_tests:
+        - not_null

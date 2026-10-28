@@ -1,0 +1,83 @@
+version: 2
+models:
+  - name: dim_campaign
+    columns:
+      - name: campaign_id
+        data_tests:
+          - unique
+      - name: campaign_manager_id
+      - name: campaign_manager_name
+      - name: campaign_name
+      - name: start_date
+      - name: end_date
+      - name: discount_rate
+  - name: dim_date
+    columns:
+      - name: date_id
+      - name: date
+      - name: date_name
+      - name: day_of_month
+      - name: day_of_week_number
+      - name: day_of_week_name
+      - name: month_number
+      - name: month_name
+      - name: year
+      - name: iso_year
+      - name: iso_week_label
+      - name: iso_week_number
+      - name: quarter
+  - name: dim_product_type
+    columns:
+      - name: product_type_id
+      - name: product_type_name
+      - name: team_id
+  - name: dim_product
+    data_tests:
+      - dbt_utils.mutually_exclusive_ranges:
+          arguments:
+            lower_bound_column: valid_from
+            upper_bound_column: "coalesce(valid_to, date '9999-12-31')"
+            partition_by: product_id
+            gaps: not_allowed
+    columns:
+      - name: product_key
+        data_tests:
+          - unique
+      - name: product_id
+        data_tests:
+          - unique:
+              config:
+                where: "is_current"
+      - name: product_type_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_product_type')
+                field: product_type_id
+      - name: product_type_name
+      - name: team_id
+      - name: product_name
+      - name: valid_from
+      - name: valid_to
+      - name: is_current
+  - name: dim_store
+    data_tests:
+      - dbt_utils.mutually_exclusive_ranges:
+          arguments:
+            lower_bound_column: valid_from
+            upper_bound_column: "coalesce(valid_to, date '9999-12-31')"
+            partition_by: store_id
+            gaps: not_allowed
+    columns:
+      - name: store_key
+      - name: store_id
+        data_tests:
+          - unique:
+              config:
+                where: "is_current"
+      - name: store_type_id
+      - name: store_name
+      - name: store_address
+      - name: valid_from
+      - name: valid_to       
+      - name: is_current
